@@ -178,7 +178,15 @@ function MetaLine({ cls, meta }: MetaLineProps) {
   const requester =
     (typeof meta.requester === 'string' ? meta.requester : undefined) ??
     (typeof meta.requestedBy === 'string' ? meta.requestedBy : undefined);
-  if (requester) bits.push(`req by ${requester}`);
+  // A request acknowledgement carries `requester`; the matching track carries
+  // `requestedBy` plus `source: request`. Other queue sources can also use
+  // requestedBy (for example an operator push names "studio"), so only those
+  // two listener-request shapes get the on-air accent treatment.
+  const humanRequester = Boolean(
+    requester
+    && requester.trim().toLowerCase() !== 'anon'
+    && (typeof meta.requester === 'string' || meta.source === 'request'),
+  );
   if (cls === 'track' && typeof meta.source === 'string') bits.push(`source: ${meta.source}`);
   const title = typeof meta.title === 'string' ? meta.title : '';
   const artist = typeof meta.artist === 'string' ? meta.artist : '';
@@ -187,11 +195,19 @@ function MetaLine({ cls, meta }: MetaLineProps) {
   }
   // A `dj` pick turn can carry the spoken link it wrote (`meta.say`).
   const say = typeof meta.say === 'string' ? meta.say.trim() : '';
-  if (!bits.length && !say) return null;
+  if (!requester && !bits.length && !say) return null;
   return (
     <div className="mt-1">
-      {bits.length > 0 && (
+      {(requester || bits.length > 0) && (
         <div className="text-[9px] tracking-[0.25em] text-muted uppercase">
+          {requester ? (
+            <>
+              <span className={cn(humanRequester && 'font-semibold tracking-[0.3em] text-vermilion')}>
+                req by {requester}
+              </span>
+              {bits.length ? ' · ' : null}
+            </>
+          ) : null}
           {bits.join(' · ')}
         </div>
       )}
