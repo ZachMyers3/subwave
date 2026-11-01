@@ -821,6 +821,8 @@ test('requests treats an emptied input as ABSENT, not as zero', () => {
   // Booleans are typeof-checked, NOT coerced — the opposite of ui/privacy.
   assert.equal(requestsPatchSchema.parse({ enabled: 1 }).enabled, undefined);
   assert.equal(requestsPatchSchema.parse({ enabled: false }).enabled, false);
+  assert.equal(requestsPatchSchema.parse({ publishPrompts: 'true' }).publishPrompts, undefined);
+  assert.equal(requestsPatchSchema.parse({ publishPrompts: true }).publishPrompts, true);
   // requests can never throw.
   assert.equal(requestsPatchSchema.safeParse({ maxPending: {} }).success, true);
 });

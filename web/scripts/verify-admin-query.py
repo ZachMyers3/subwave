@@ -280,7 +280,7 @@ def stub_dashboard(page, queue_track=False):
     fixtures = {
         "/now-playing": {},
         "/state": state,
-        "/session": {"messages": []},
+        "/debug/session": {"messages": []},
         "/listeners/connections": {"count": 0, "connections": []},
         "/stats": {"llm": {"count": 0, "latency": {}}, "tts": {"count": 0}},
         "/requests": {"requests": []},
@@ -2197,15 +2197,15 @@ def dashboard_poll_cadences(page):
     settle_clock(page)
     initial = {
         path: request_count(page, path, authenticated=True)
-        for path in ("/session", "/listeners/connections", "/stats", "/requests")
+        for path in ("/debug/session", "/listeners/connections", "/stats", "/requests")
     }
     assert all(count > 0 for count in initial.values()), (initial, page.request_log)
 
     settle_clock(page, 2_900)
-    assert request_count(page, "/session", authenticated=True) == initial["/session"], page.request_log
-    with page.expect_request(lambda request: is_admin_request(request, "/session")):
+    assert request_count(page, "/debug/session", authenticated=True) == initial["/debug/session"], page.request_log
+    with page.expect_request(lambda request: is_admin_request(request, "/debug/session")):
         settle_clock(page, 100)
-    assert request_count(page, "/session", authenticated=True) == initial["/session"] + 1, page.request_log
+    assert request_count(page, "/debug/session", authenticated=True) == initial["/debug/session"] + 1, page.request_log
 
     with page.expect_request(lambda request: is_admin_request(request, "/listeners/connections")):
         with page.expect_request(lambda request: is_admin_request(request, "/requests")):
@@ -2218,7 +2218,7 @@ def dashboard_poll_cadences(page):
 
     before = {
         path: request_count(page, path, authenticated=True)
-        for path in ("/session", "/listeners/connections", "/stats", "/requests")
+        for path in ("/debug/session", "/listeners/connections", "/stats", "/requests")
     }
     set_page_hidden(page, True)
     settle_clock(page, 30_000)
@@ -2234,12 +2234,12 @@ def dashboard_mutation_refresh(page):
     page.goto(f"{WEB}/admin/dash", wait_until="domcontentloaded")
     remove = page.get_by_role("button", name="Remove Verify queue track from queue")
     remove.wait_for(state="visible")
-    before_status = request_count(page, "/session", authenticated=True)
+    before_status = request_count(page, "/debug/session", authenticated=True)
     before_requests = request_count(page, "/requests", authenticated=True)
     remove.click()
     settle_clock(page, 50)
     assert request_count(page, "/dj/queue/verify-queue-track", "DELETE", authenticated=True) == 1, page.request_log
-    assert request_count(page, "/session", authenticated=True) == before_status + 1, page.request_log
+    assert request_count(page, "/debug/session", authenticated=True) == before_status + 1, page.request_log
     assert request_count(page, "/requests", authenticated=True) == before_requests + 1, page.request_log
 
 
@@ -2267,7 +2267,7 @@ def dashboard_cancel_failure_refreshes_latest_status(page):
             fulfill_json(route, {"nowPlaying": {"title": title, "artist": "SUB/WAVE"}})
         elif path == "/state":
             fulfill_json(route, state)
-        elif path == "/session":
+        elif path == "/debug/session":
             fulfill_json(route, {"messages": []})
         elif path == "/dj/queue/verify-queue-track" and route.request.method == "DELETE":
             cancel_attempted = True

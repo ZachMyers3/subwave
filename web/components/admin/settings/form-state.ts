@@ -97,6 +97,7 @@ export function settingsForm(v: NonNullable<SettingsData['values']>): FormState 
     },
     requests: {
       enabled: v.requests?.enabled !== false,
+      publishPrompts: v.requests?.publishPrompts === true,
       maxPending: String(v.requests?.maxPending ?? 6),
       cooldownSec: String(v.requests?.cooldownSec ?? 60),
       perIpHourlyCap: String(v.requests?.perIpHourlyCap ?? 8),

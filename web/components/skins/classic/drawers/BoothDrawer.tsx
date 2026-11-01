@@ -8,6 +8,7 @@ import {
   turnText,
   isCarriedTurn,
   isDjTurn,
+  isListenerPrompt,
   isShowBoundary,
   showBoundaryLabel,
   type TurnDisplayClass,
@@ -54,11 +55,11 @@ export default function BoothDrawer({ items, timezone, locale }: BoothDrawerProp
   const filtered = useMemo<SessionTurn[]>(() => {
     if (!items?.length) return [];
     // System turns (session cues, pick prompts) are operator-facing and never
-    // reach listeners. The one exception is the show-boundary separator that
-    // follows the previous show's carried tail after a hard roll (#1690); it
-    // stays in every filter so dimmed rows below it read as the last show.
+    // reach listeners. Deliberately projected listener prompts appear in All;
+    // the show-boundary separator stays in every filter so the dimmed rows
+    // below it read as the previous show (#1690).
     const ordered = [...items]
-      .filter((turn) => turnClass(turn) !== 'system' || isShowBoundary(turn))
+      .filter((turn) => turnClass(turn) !== 'system' || isShowBoundary(turn) || isListenerPrompt(turn))
       .reverse();
     if (filter === 'all') return ordered;
     return ordered.filter((turn) =>
@@ -158,7 +159,7 @@ export default function BoothDrawer({ items, timezone, locale }: BoothDrawerProp
               >
                 {isVoice ? `"${text}"` : text}
               </div>
-              <MetaLine cls={cls} meta={turn.meta} />
+              <MetaLine cls={cls} kind={turn.kind} meta={turn.meta} />
             </m.div>
           );
         })}
@@ -169,10 +170,11 @@ export default function BoothDrawer({ items, timezone, locale }: BoothDrawerProp
 
 interface MetaLineProps {
   cls: TurnDisplayClass;
+  kind?: string;
   meta: SessionTurn['meta'];
 }
 
-function MetaLine({ cls, meta }: MetaLineProps) {
+function MetaLine({ cls, kind, meta }: MetaLineProps) {
   if (!meta) return null;
   const bits: string[] = [];
   const requester =
@@ -185,8 +187,10 @@ function MetaLine({ cls, meta }: MetaLineProps) {
   const humanRequester = Boolean(
     requester
     && requester.trim().toLowerCase() !== 'anon'
+    && requester.trim().toLowerCase() !== 'anonymous'
     && (typeof meta.requester === 'string' || meta.source === 'request'),
   );
+  const requesterLabel = kind === 'prompt' ? 'prompt by' : 'req by';
   if (cls === 'track' && typeof meta.source === 'string') bits.push(`source: ${meta.source}`);
   const title = typeof meta.title === 'string' ? meta.title : '';
   const artist = typeof meta.artist === 'string' ? meta.artist : '';
@@ -203,7 +207,7 @@ function MetaLine({ cls, meta }: MetaLineProps) {
           {requester ? (
             <>
               <span className={cn(humanRequester && 'font-semibold tracking-[0.3em] text-vermilion')}>
-                req by {requester}
+                {requesterLabel} {requester}
               </span>
               {bits.length ? ' · ' : null}
             </>

@@ -68,6 +68,7 @@ export function StationSection({ data, form, setForm, busy, saveSettings, fieldE
     },
     requests: {
       enabled: form.requests.enabled,
+      publishPrompts: form.requests.publishPrompts,
       maxPending: parseInt(form.requests.maxPending, 10),
       cooldownSec: parseInt(form.requests.cooldownSec, 10),
       perIpHourlyCap: parseInt(form.requests.perIpHourlyCap, 10),
@@ -379,8 +380,8 @@ export function StationSection({ data, form, setForm, busy, saveSettings, fieldE
         </div>
       </Card>
 
-      <Advanced note="request rate limits and the public-API switch">
-      <Card title="Listener requests" sub="Rate limits and the pause switch for POST /request">
+      <Advanced note="request rate limits and public Booth controls">
+      <Card title="Listener requests" sub="Rate limits, availability and public Booth visibility">
         <div className="grid gap-3">
           <div className="field">
             <Label>Accept requests</Label>
@@ -396,6 +397,21 @@ export function StationSection({ data, form, setForm, busy, saveSettings, fieldE
               requests down mid-raid. During the incident that prompted this page, the only
               switch was an env var that needed a restart to flip; this applies live. Track picks
               and everything else keep playing either way.
+            </div>
+          </div>
+
+          <div className="field">
+            <Label>Show request prompts in Booth</Label>
+            <Seg
+              options={[...ON_OFF]}
+              value={form.requests.publishPrompts ? 'on' : 'off'}
+              onChange={id =>
+                setForm(f => ({ ...f, requests: { ...f.requests, publishPrompts: id === 'on' } }))
+              }
+            />
+            <div className="field-hint">
+              Publishes each listener&apos;s request text and supplied display name in the public
+              Booth. Applies live. Off keeps prompts visible to administrators only.
             </div>
           </div>
 

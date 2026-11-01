@@ -36,7 +36,7 @@ import { LIQ_JINGLE_RATIO_PATH } from '../settings/liquidsoap.js';
 import { handoverStatus } from '../broadcast/handover-policy.js';
 import * as requestLog from '../broadcast/request-log.js';
 import { getStationTimezone } from '../time.js';
-import { publicOrigin } from './public.js';
+import { boothSessionPayload, publicOrigin } from './public.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { BadStatePathError, listStateDir } from '../util/state-tree.js';
 import { buildPickerTools, PICKER_TOOLS } from '../llm/tools.js';
@@ -234,6 +234,12 @@ router.get('/debug/dj-log', requireAdmin, (req, res) => {
     djLogCount: queue.djLog.length,
     timezone: getStationTimezone(),
   });
+});
+
+// The dashboard's lightweight live Booth feed. Unlike public GET /session it
+// always includes safe listener-prompt rows, regardless of the public switch.
+router.get('/debug/session', requireAdmin, (_req, res) => {
+  res.json(boothSessionPayload(true));
 });
 
 async function buildDebugSnapshot(req: express.Request): Promise<any> {

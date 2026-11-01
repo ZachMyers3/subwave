@@ -1263,6 +1263,7 @@ function settingsRequestsBool() {
 
 export const requestsPatchSchema = settingsBlockOf({
   enabled: settingsRequestsBool(),
+  publishPrompts: settingsRequestsBool(),
   onePendingPerIp: settingsRequestsBool(),
   maxPending: settingsRequestsInt({ min: 1, max: 50 }),
   globalHourlyCap: settingsRequestsInt({ min: 5, max: 500 }),

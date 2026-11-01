@@ -776,6 +776,10 @@ export async function load() {
         typeof stored.requests?.enabled === 'boolean'
           ? stored.requests.enabled
           : DEFAULTS.requests.enabled,
+      publishPrompts:
+        typeof stored.requests?.publishPrompts === 'boolean'
+          ? stored.requests.publishPrompts
+          : DEFAULTS.requests.publishPrompts,
       maxPending: intIn(stored.requests?.maxPending, DEFAULTS.requests.maxPending, 1, 50),
       globalHourlyCap: intIn(
         stored.requests?.globalHourlyCap,
@@ -2580,13 +2584,14 @@ export async function prepareUpdate(patch, { themeIds }: { themeIds?: ReadonlySe
     // including the load-bearing part: an emptied admin input arrives as JSON
     // null, which is UNUSABLE rather than 0, so it leaves the stored value
     // alone instead of clamping to the field's floor and closing the request
-    // line. The rebuild keeps exactly the seven known keys.
+    // line. The rebuild keeps exactly the known keys.
     const rq = parseSettingsPatchKey<Record<string, unknown>>('requests', patch.requests);
     const curReq = next.requests || DEFAULTS.requests;
     const pick = <K extends keyof typeof curReq>(k: K) =>
       (rq[k as string] !== undefined ? rq[k as string] : curReq[k]) as (typeof curReq)[K];
     next.requests = {
       enabled: pick('enabled'),
+      publishPrompts: pick('publishPrompts'),
       maxPending: pick('maxPending'),
       globalHourlyCap: pick('globalHourlyCap'),
       repeatCooldownMin: pick('repeatCooldownMin'),

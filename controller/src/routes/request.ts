@@ -242,9 +242,13 @@ async function resolveRequest(entry) {
       // not leave 'anon' in it as if it were a name (#1347).
       text: `${isNamedRequester(requester) ? `Listener "${requester}" requests` : 'An unnamed listener requests'}: "${text}"`
         + (cur ? ` (currently playing "${cur.title}" by ${cur.artist}${cur.id ? ` [id: ${cur.id}]` : ''})` : ''),
-      // The bare text, so the echo guards can check every request still in the
-      // agents' window without the line's own framing words (not public meta).
-      meta: { requestText: text },
+      // The bare text lets the echo guards check every request still in the
+      // agents' window. The structured requester lets the public projection
+      // publish a safe prompt row without parsing this agent-facing sentence.
+      meta: {
+        requestText: text,
+        requester: isNamedRequester(requester) ? requester : null,
+      },
     });
   } catch (err) {
     queue.log('error', `Session update for request failed: ${err.message}`);

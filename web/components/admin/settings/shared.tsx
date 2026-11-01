@@ -328,6 +328,7 @@ export interface PrivacyForm {
  *  idiom). */
 export interface RequestsForm {
   enabled: boolean;
+  publishPrompts: boolean;
   maxPending: string;
   cooldownSec: string;
   perIpHourlyCap: string;
@@ -542,6 +543,7 @@ export interface SettingsData {
     };
     requests?: {
       enabled?: boolean;
+      publishPrompts?: boolean;
       maxPending?: number;
       globalHourlyCap?: number;
       repeatCooldownMin?: number;
