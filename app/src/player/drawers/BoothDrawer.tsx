@@ -1,10 +1,11 @@
-// System turns are operator-only, except listener show-boundary separators (#1690).
+// System turns are operator-only except public prompts and show boundaries (#1690).
 
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import {
   isCarriedTurn,
   isDjTurn,
+  isListenerPrompt,
   isShowBoundary,
   showBoundaryLabel,
   turnClass,
@@ -39,7 +40,7 @@ export default function BoothDrawer({ items, timezone, locale }: BoothDrawerProp
   const filtered = useMemo<SessionTurn[]>(() => {
     if (!items?.length) return [];
     const ordered = [...items]
-      .filter((t) => turnClass(t) !== 'system' || isShowBoundary(t))
+      .filter((t) => turnClass(t) !== 'system' || isShowBoundary(t) || isListenerPrompt(t))
       .reverse();
     if (filter === 'all') return ordered;
     return ordered.filter((t) =>
@@ -109,6 +110,9 @@ export default function BoothDrawer({ items, timezone, locale }: BoothDrawerProp
         }
         const cls = turnClass(turn);
         const isVoice = cls === 'voice';
+        const isPrompt = isListenerPrompt(turn);
+        const requester = typeof turn.meta?.requester === 'string' ? turn.meta.requester.trim() : '';
+        const humanRequester = Boolean(requester && requester.toLowerCase() !== 'anonymous' && requester.toLowerCase() !== 'anon');
         const text = turnText(turn);
         return (
           <View
@@ -147,6 +151,20 @@ export default function BoothDrawer({ items, timezone, locale }: BoothDrawerProp
             >
               {isVoice ? `"${text}"` : text}
             </Text>
+            {isPrompt && requester ? (
+              <Text
+                className="font-mono"
+                style={{
+                  marginTop: 4,
+                  fontSize: 9,
+                  letterSpacing: 2,
+                  color: humanRequester ? colors.accent : colors.muted,
+                  fontWeight: humanRequester ? '600' : '400',
+                }}
+              >
+                {`PROMPT BY ${requester.toUpperCase()}`}
+              </Text>
+            ) : null}
           </View>
         );
       })}

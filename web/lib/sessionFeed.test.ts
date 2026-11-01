@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   isCarriedTurn,
+  isListenerPrompt,
   isShowBoundary,
   selectThinkingTurn,
   showBoundaryLabel,
@@ -46,6 +47,13 @@ test('the show-boundary separator and carried turns are recognised', () => {
   assert.equal(isCarriedTurn({ role: 'segment', text: 'live' }), false);
   // Still a system turn by class: callers opt in to drawing it.
   assert.equal(turnClass(boundary), 'system');
+});
+
+test('only projected listener prompt events are recognised', () => {
+  assert.equal(isListenerPrompt({ role: 'event', kind: 'prompt', text: 'Play Low' }), true);
+  assert.equal(isListenerPrompt({ role: 'event', kind: 'request', text: 'internal' }), false);
+  assert.equal(isListenerPrompt({ role: 'segment', kind: 'prompt', text: 'spoofed' }), false);
+  assert.equal(isListenerPrompt(null), false);
 });
 
 test('the separator label uses the client clock for the boundary, else the server text', () => {

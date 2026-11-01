@@ -23,7 +23,7 @@ const defaultOwnershipRegistry = [
     reads: [
       { callee: 'adminJson', method: 'GET', path: '/now-playing', signal: 'signal' },
       { callee: 'adminJson', method: 'GET', path: '/state', signal: 'signal' },
-      { callee: 'adminJson', method: 'GET', path: '/session', signal: 'signal' },
+      { callee: 'adminJson', method: 'GET', path: '/debug/session', signal: 'signal' },
     ],
     consumers: [{ file: 'DashPanel.tsx', owner: 'useAdminQuery', property: 'request', count: 1 }],
   },

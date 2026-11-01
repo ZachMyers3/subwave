@@ -15,7 +15,7 @@ test('dash status keeps healthy endpoint data when one response is degraded', as
   const fetcher = async (path: string) => {
     if (path === '/now-playing') return jsonResponse({ nowPlaying: { title: 'Still live' } });
     if (path === '/state') return jsonResponse({ error: 'state rolling' }, 503);
-    if (path === '/session') return jsonResponse({ messages: [{ role: 'assistant', content: 'On air' }] });
+    if (path === '/debug/session') return jsonResponse({ messages: [{ role: 'assistant', content: 'On air' }] });
     throw new Error(`unexpected path: ${path}`);
   };
 

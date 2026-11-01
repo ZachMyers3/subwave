@@ -12,7 +12,7 @@ await settings.load();
 // Absent key → full defaults.
 const d = settings.get().requests;
 assert.deepEqual(d, {
-  enabled: true, maxPending: 6, globalHourlyCap: 30, repeatCooldownMin: 120,
+  enabled: true, publishPrompts: false, maxPending: 6, globalHourlyCap: 30, repeatCooldownMin: 120,
   cooldownSec: 60, perIpHourlyCap: 8, onePendingPerIp: true,
 });
 
@@ -20,6 +20,7 @@ assert.deepEqual(d, {
 await settings.update({ requests: { enabled: false, maxPending: 999, cooldownSec: 1, repeatCooldownMin: -5 } });
 const p = settings.get().requests;
 assert.equal(p.enabled, false);
+assert.equal(p.publishPrompts, false);
 assert.equal(p.maxPending, 50);        // clamped to max
 assert.equal(p.cooldownSec, 5);        // clamped to min
 assert.equal(p.repeatCooldownMin, 0);  // clamped to min (0 = off)
@@ -69,6 +70,9 @@ assert.equal(settings.get().requests.maxPending, 7);
 // A real 0 is still a real value where the range allows it (0 = cooldown off).
 await settings.update({ requests: { repeatCooldownMin: 0 } });
 assert.equal(settings.get().requests.repeatCooldownMin, 0);
+
+await settings.update({ requests: { publishPrompts: true } });
+assert.equal(settings.get().requests.publishPrompts, true);
 
 // --- rate limiting is settings-driven ---------------------------------------
 const {

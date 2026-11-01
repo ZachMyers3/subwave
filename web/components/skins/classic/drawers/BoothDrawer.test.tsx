@@ -66,3 +66,20 @@ test('anonymous and non-listener requesters keep the muted metadata treatment', 
   assert.doesNotMatch(anonymous, /text-vermilion">req by anon/);
   assert.doesNotMatch(studio, /text-vermilion">req by studio/);
 });
+
+test('a projected listener prompt renders its text and author while internal events stay hidden', () => {
+  const prompt = render([{
+    t: '2026-10-07T22:47:00Z',
+    role: 'event', kind: 'prompt', text: 'Play some early Talking Heads',
+    meta: { requester: 'Z Man' },
+  }]);
+  assert.match(prompt, />prompt</);
+  assert.match(prompt, /Play some early Talking Heads/);
+  assert.match(prompt, /text-vermilion">prompt by Z Man/);
+
+  const internal = render([{
+    role: 'event', kind: 'request', text: 'Listener &quot;Z Man&quot; requests secret internals',
+    meta: { requester: 'Z Man' },
+  }]);
+  assert.doesNotMatch(internal, /secret internals/);
+});

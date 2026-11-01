@@ -66,6 +66,12 @@ export function isShowBoundary(turn: SessionTurn | null | undefined): boolean {
   return turn?.role === 'event' && turn.kind === 'show-boundary';
 }
 
+/** A listener request deliberately projected by the controller. Other event
+ * turns remain operator/system detail and stay hidden from listener Booths. */
+export function isListenerPrompt(turn: SessionTurn | null | undefined): boolean {
+  return turn?.role === 'event' && turn.kind === 'prompt';
+}
+
 export function isCarriedTurn(turn: SessionTurn | null | undefined): boolean {
   return turn?.meta?.carried === true;
 }

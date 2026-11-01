@@ -205,6 +205,7 @@ export const DEFAULTS = {
   // cooldown (0 = off), minimum gap between any two, and a single IP's share.
   requests: {
     enabled: true,
+    publishPrompts: false,
     maxPending: 6,
     globalHourlyCap: 30,
     repeatCooldownMin: 120,

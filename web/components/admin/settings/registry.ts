@@ -219,6 +219,7 @@ export const SETTINGS_INDEX: readonly IndexEntry[] = [
   { label: 'Stream password', section: 'station', card: 'Privacy', keywords: 'listener auth icecast lock restart' },
   { label: 'Station password', section: 'station', card: 'Privacy', keywords: 'secret shared passphrase' },
   { label: 'Accept requests', section: 'station', card: 'Listener requests', keywords: 'request line open closed' },
+  { label: 'Show request prompts in Booth', section: 'station', card: 'Listener requests', keywords: 'publish public listener text author display' },
   { label: 'Max queued requests', section: 'station', card: 'Listener requests', keywords: 'pending queue limit' },
   { label: 'Seconds between requests', section: 'station', card: 'Listener requests', keywords: 'cooldown rate limit' },
   { label: 'Per-listener hourly cap', section: 'station', card: 'Listener requests', keywords: 'ip rate limit hour' },

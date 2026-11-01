@@ -79,13 +79,44 @@ interface TurnLike {
   meta?: unknown;
 }
 
+function turnMeta(turn: TurnLike): Record<string, unknown> {
+  return turn?.meta && typeof turn.meta === 'object' ? turn.meta as Record<string, unknown> : {};
+}
+
 /** One booth turn reduced to the public shape. `meta` is always an object, as
  *  it always has been, so `turn.meta.x` reads keep working on old clients. */
 export function publicSessionTurn(turn: TurnLike): PublicTurn {
-  const src = turn?.meta && typeof turn.meta === 'object' ? (turn.meta as Record<string, unknown>) : {};
+  const src = turnMeta(turn);
   const meta: Record<string, unknown> = {};
   for (const k of PUBLIC_TURN_META_KEYS) {
     if (Object.prototype.hasOwnProperty.call(src, k)) meta[k] = src[k];
   }
   return { t: turn?.t, role: turn?.role, kind: turn?.kind, text: turn?.text, meta };
+}
+
+/** Reduce an internal Booth feed to listener-safe turns. Request events are
+ * special: their internal text includes agent context and track ids, so they
+ * are either omitted or rebuilt solely from structured request metadata. */
+export function publicBoothFeed(turns: readonly TurnLike[], publishPrompts: boolean): PublicTurn[] {
+  const out: PublicTurn[] = [];
+  for (const turn of turns) {
+    if (turn?.role === 'event' && turn.kind === 'request') {
+      if (!publishPrompts) continue;
+      const src = turnMeta(turn);
+      const requestText = typeof src.requestText === 'string' ? src.requestText.trim() : '';
+      if (!requestText) continue;
+      const rawRequester = typeof src.requester === 'string' ? src.requester.trim() : '';
+      const requester = rawRequester && rawRequester.toLowerCase() !== 'anon' ? rawRequester : 'Anonymous';
+      out.push({
+        t: turn.t,
+        role: 'event',
+        kind: 'prompt',
+        text: requestText,
+        meta: { requester },
+      });
+      continue;
+    }
+    out.push(publicSessionTurn(turn));
+  }
+  return out;
 }

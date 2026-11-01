@@ -49,7 +49,7 @@ export async function fetchDashStatus(fetcher: AdminFetch, signal: AbortSignal):
   const [nowPlaying, state, session] = await Promise.all([
     degradedJson(adminJson<Partial<DashStatus>>(fetcher, '/now-playing', undefined, signal)),
     degradedJson(adminJson<QueueState>(fetcher, '/state', undefined, signal)),
-    degradedJson(adminJson<{ messages?: SessionTurn[] }>(fetcher, '/session', undefined, signal)),
+    degradedJson(adminJson<{ messages?: SessionTurn[] }>(fetcher, '/debug/session', undefined, signal)),
   ]);
   return { ...nowPlaying, queue: state ?? {}, sessionMessages: session?.messages ?? [] };
 }

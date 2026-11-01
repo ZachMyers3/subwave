@@ -20,7 +20,7 @@ import { advertisedBufferSeconds } from '../broadcast/stream-mounts.js';
 import { getSetupStatusSync } from '../setup/firstRun.js';
 import { clockDisplay, getStationTimezone, zonedParts } from '../time.js';
 import { composeBoothFeed } from '../broadcast/booth-carry.js';
-import { publicQueueState, publicSessionTurn } from '../util/public-feed.js';
+import { publicBoothFeed, publicQueueState } from '../util/public-feed.js';
 import { listThemesAnnotated, DEFAULT_THEME_ID } from '../themes.js';
 import { listCommunitySkills } from '../skills/loader.js';
 import { listCommunityPersonas } from '../personas/community.js';
@@ -675,10 +675,10 @@ router.get('/themes', async (req, res) => {
 // not go blank at a show boundary (#1690). Display only; `session` still
 // describes the live session alone. Each turn's meta is reduced to what a
 // booth renders (util/public-feed.ts); agent tool trails stay internal.
-router.get('/session', (req, res) => {
+export function boothSessionPayload(publishPrompts: boolean) {
   const s = session.getSession();
-  if (!s) return res.json({ session: null, messages: [] });
-  res.json({
+  if (!s) return { session: null, messages: [] };
+  return {
     session: {
       id: s.id,
       kind: s.kind,
@@ -686,11 +686,15 @@ router.get('/session', (req, res) => {
       startedAt: s.startedAt,
       show: s.show?.name || null,
     },
-    messages: composeBoothFeed(s, Date.now(), (at) => {
+    messages: publicBoothFeed(composeBoothFeed(s, Date.now(), (at) => {
       const p = zonedParts(new Date(at));
       return clockDisplay(p.hour, p.minute, settings.get().locale === 'en-US');
-    }).slice(-120).map(publicSessionTurn),
-  });
+    }), publishPrompts).slice(-120),
+  };
+}
+
+router.get('/session', (req, res) => {
+  res.json(boothSessionPayload(settings.get().requests.publishPrompts));
 });
 
 // The shipped community skill catalog, browse-only. Never throws; an empty

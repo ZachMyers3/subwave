@@ -27,7 +27,7 @@ process.env.ADMIN_USER = 'feed-admin';
 process.env.ADMIN_PASS = 'feed-admin-pass';
 
 const { default: express } = await import('express');
-const { publicQueueState, publicSessionTurn } = await import('../src/util/public-feed.js');
+const { publicBoothFeed, publicQueueState, publicSessionTurn } = await import('../src/util/public-feed.js');
 const session = await import('../src/broadcast/session.js');
 const { queue } = await import('../src/broadcast/queue.js');
 const { router: publicRouter } = await import('../src/routes/public.js');
@@ -95,6 +95,32 @@ test('publicSessionTurn keeps booth meta and drops tool trails and prompt coachi
     'meta is always an object, as before');
 });
 
+test('publicBoothFeed gates request prompts and rebuilds their public shape', () => {
+  const internal = {
+    t: '2026-10-09T10:00:00.000Z',
+    role: 'event',
+    kind: 'request',
+    text: 'Listener "Sam" requests: "Play Low" (currently playing "Secret" [id: private-id])',
+    meta: { requestText: 'Play Low', requester: 'Sam', promptSuffix: 'secret coaching' },
+  };
+  assert.deepEqual(publicBoothFeed([internal], false), []);
+  assert.deepEqual(publicBoothFeed([internal], true), [{
+    t: internal.t,
+    role: 'event',
+    kind: 'prompt',
+    text: 'Play Low',
+    meta: { requester: 'Sam' },
+  }]);
+  const raw = JSON.stringify(publicBoothFeed([internal], true));
+  assert.ok(!raw.includes('private-id'));
+  assert.ok(!raw.includes('Secret'));
+  assert.ok(!raw.includes('coaching'));
+
+  assert.deepEqual(publicBoothFeed([{ ...internal, meta: { requestText: 'Anything loud', requester: null } }], true)[0]?.meta,
+    { requester: 'Anonymous' });
+  assert.deepEqual(publicBoothFeed([{ ...internal, meta: {} }], true), [], 'legacy unstructured requests stay private');
+});
+
 test('GET /state carries no booth log, so no operator line reaches it', async () => {
   for (const [kind, text] of PRIVATE_LINES) queue.log(kind, text);
   assert.ok(queue.djLog.length >= PRIVATE_LINES.length, 'the lines are in the booth log');
@@ -128,6 +154,37 @@ test('GET /session publishes booth meta only', async () => {
   assert.ok(!raw.includes('MODEL-ONLY'), 'prompt coaching stays internal');
   const reply = body.messages.find((m: { kind: string; role: string }) => m.role === 'dj');
   assert.deepEqual(reply.meta, { trackId: 't9', requester: 'Ana' });
+});
+
+test('GET /session applies the public prompt switch live', async () => {
+  session.start({ at: new Date().toISOString() } as never);
+  session.appendTurn({
+    role: 'event', kind: 'request',
+    text: 'Listener "Ana" requests: "Björk please" (currently playing "Private" [id: hidden-id])',
+    meta: { requestText: 'Björk please', requester: 'Ana' },
+  });
+
+  const settings = await import('../src/settings.js');
+  await settings.update({ requests: { publishPrompts: false } } as never);
+  const hidden = await (await fetch(`${base}/session`)).text();
+  assert.ok(!hidden.includes('Björk please'));
+  assert.ok(!hidden.includes('hidden-id'));
+
+  await settings.update({ requests: { publishPrompts: true } } as never);
+  const shown = await (await fetch(`${base}/session`)).json() as any;
+  assert.deepEqual(shown.messages.find((m: any) => m.kind === 'prompt'), {
+    t: shown.messages.find((m: any) => m.kind === 'prompt').t,
+    role: 'event', kind: 'prompt', text: 'Björk please', meta: { requester: 'Ana' },
+  });
+});
+
+test('GET /debug/session is admin-only and includes safe prompts when public display is off', async () => {
+  const settings = await import('../src/settings.js');
+  await settings.update({ requests: { publishPrompts: false } } as never);
+  assert.equal((await fetch(`${base}/debug/session`)).status, 401);
+  const body = await (await fetch(`${base}/debug/session`, { headers: ADMIN })).json() as any;
+  assert.ok(body.messages.some((m: any) => m.kind === 'prompt' && m.text === 'Björk please'));
+  assert.ok(!JSON.stringify(body).includes('hidden-id'));
 });
 
 test('GET /debug/dj-log serves the booth log to an admin only', async () => {
